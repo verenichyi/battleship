@@ -17,6 +17,11 @@ export interface Game {
     currentPlayerId: number | string;
 }
 
+export interface Winner {
+    name: string;
+    wins: number;
+}
+
 export interface Message<T> {
     type: string;
     data: T;
@@ -33,4 +38,13 @@ export interface RegResponseData {
     index: number | string;
     error: boolean;
     errorText: string;
+}
+
+export interface AddUserToRoomRequestData {
+    indexRoom: number | string;
+}
+
+export interface CreateGameResponseData {
+    idGame: number | string;
+    idPlayer: number | string;
 }

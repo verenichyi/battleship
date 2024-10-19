@@ -3,7 +3,7 @@ import { MessageData } from "../models/types";
 
 export const parseWsRequestMessage = (message: string): Message<MessageData> => {
     const parsedMessage = JSON.parse(message);
-    return  { ...parsedMessage, data: JSON.parse(parsedMessage.data)}
+    return  { ...parsedMessage, data: parsedMessage.data ? JSON.parse(parsedMessage.data): ''}
 }
 
 export const parseWsResponseMessage = (message: Message<MessageData>): string => {
