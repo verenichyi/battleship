@@ -1,7 +1,9 @@
-import { AddUserToRoomRequestData, CreateGameResponseData, RegRequestData, RegResponseData } from "./interfaces";
+import { AddUserToRoomRequestData, CreateGameResponseData, RegRequestData, RegResponseData, UpdateRoomResponseDataItem, UpdateWinnersResponseDataItem } from "./interfaces";
 
 export type MessageData =
     | RegRequestData
     | RegResponseData
     | AddUserToRoomRequestData
-    | CreateGameResponseData;
+    | CreateGameResponseData
+    | UpdateWinnersResponseDataItem[]
+    | UpdateRoomResponseDataItem[];
