@@ -33,6 +33,9 @@ class CommandHandler {
       case MessageTypes.CREATE_ROOM:
         this.createRoom(ws);
         break;
+      case MessageTypes.ADD_USER_TO_ROOM:
+        this.addUserToRoom(ws, data as AddUserToRoomRequestData);
+        break;
     }
   }
 
@@ -154,11 +157,42 @@ class CommandHandler {
   }
 
   addUserToRoom(ws: WebSocket, data: AddUserToRoomRequestData): void {
-    // add yourself to somebody's room, then remove the room from available rooms list
     const { indexRoom } = data;
     const client = this.clients.get(ws);
     const room = this.rooms.get(+indexRoom);
     const roomOwner = room[0].index;
+
+    if (roomOwner === client.index) {
+      logMessage('res', 'You already in this room as owner!');
+      return;
+    }
+
+    room.push({ name: client.name, index: client.index });
+    this.rooms.set(+indexRoom, room);
+    this.rooms.delete(+indexRoom);
+
+    const playersIds = room.map((player) => player.index);
+
+    if (playersIds) {
+      // this.createGame(playersIds);
+      const clients = Array.from(this.clients.values()).filter((client) => playersIds.includes(client.index));
+
+      clients.forEach((client) => {
+        const response = {
+          type: 'create_game',
+          data: {
+            idGame: 0,
+            idPlayer: client.index,
+          },
+          id: 0,
+        };
+
+        client.ws.send(parseWsResponseMessage(response));
+        logMessage('res', response);
+      });
+    }
+
+    this.updateRooms();
   }
 }
 
