@@ -173,26 +173,27 @@ class CommandHandler {
 
     const playersIds = room.map((player) => player.index);
 
-    if (playersIds) {
-      // this.createGame(playersIds);
-      const clients = Array.from(this.clients.values()).filter((client) => playersIds.includes(client.index));
-
-      clients.forEach((client) => {
-        const response = {
-          type: 'create_game',
-          data: {
-            idGame: 0,
-            idPlayer: client.index,
-          },
-          id: 0,
-        };
-
-        client.ws.send(parseWsResponseMessage(response));
-        logMessage('res', response);
-      });
-    }
-
+    this.createGame(playersIds);
     this.updateRooms();
+  }
+
+  createGame(playersIds: number[]): void {
+    const clients = Array.from(this.clients.values()).filter((client) => playersIds.includes(client.index));
+
+    // TODO Game board
+    clients.forEach((client) => {
+      const response = {
+        type: MessageTypes.CREATE_GAME,
+        data: {
+          idGame: 0,
+          idPlayer: client.index,
+        },
+        id: 0,
+      };
+
+      client.ws.send(parseWsResponseMessage(response));
+      logMessage('res', response);
+    });
   }
 }
 
