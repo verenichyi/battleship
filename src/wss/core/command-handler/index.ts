@@ -1,18 +1,19 @@
-import { WebSocket, WebSocketServer } from 'ws';
+import { WebSocket } from 'ws';
 import { Duplex } from 'node:stream';
 import {
+  AddShipsRequestData,
   AddUserToRoomRequestData,
   Client,
-  Game,
   Message,
   Player,
   RegRequestData,
   RoomPlayer,
-} from '../models/interfaces';
-import { MessageData } from '../models/types';
-import { MessageTypes } from '../enums/messageTypes';
-import { parseWsResponseMessage } from '../helpers';
-import { logMessage } from '../helpers/logMessage';
+} from '../../models/interfaces';
+import { MessageData } from '../../models/types';
+import { MessageTypes } from '../../enums/messageTypes';
+import { parseWsResponseMessage } from '../../helpers';
+import { logMessage } from '../../helpers/logMessage';
+import { Game } from '../game';
 
 class CommandHandler {
   private players: Map<number, Player> = new Map();
@@ -35,6 +36,9 @@ class CommandHandler {
         break;
       case MessageTypes.ADD_USER_TO_ROOM:
         this.addUserToRoom(ws, data as AddUserToRoomRequestData);
+        break;
+      case MessageTypes.ADD_SHIPS:
+        this.addShips(ws, data as AddShipsRequestData);
         break;
     }
   }
@@ -178,14 +182,16 @@ class CommandHandler {
   }
 
   createGame(playersIds: number[]): void {
+    const idGame = this.games.size;
+    const game = new Game(playersIds);
+    this.games.set(idGame, game);
     const clients = Array.from(this.clients.values()).filter((client) => playersIds.includes(client.index));
 
-    // TODO Game board
     clients.forEach((client) => {
       const response = {
         type: MessageTypes.CREATE_GAME,
         data: {
-          idGame: 0,
+          idGame,
           idPlayer: client.index,
         },
         id: 0,
@@ -194,6 +200,43 @@ class CommandHandler {
       client.ws.send(parseWsResponseMessage(response));
       logMessage('res', response);
     });
+  }
+
+  addShips(ws: WebSocket, data: AddShipsRequestData) {
+    const client = this.clients.get(ws);
+    const { gameId, ships } = data;
+    const gameBoard = this.games.get(+gameId);
+
+    if (gameBoard) {
+      const dataBoard = gameBoard.addShips(client.index, ships);
+
+      if (dataBoard) {
+        const turnResponse = {
+          type: MessageTypes.TURN,
+          data: {
+            currentPlayer: client.index,
+          },
+          id: 0,
+        };
+
+        Array.from(dataBoard.entries()).forEach(([playerId, ships]) => {
+          const response = {
+            type: MessageTypes.START_GAME,
+            data: { ships: ships, currentPlayerIndex: playerId },
+            id: 0,
+          };
+
+          const client = Array.from(this.clients.values()).find((client) => client.index === playerId);
+
+          if (client) {
+            [response, turnResponse].forEach((res) => {
+              client.ws.send(parseWsResponseMessage(res));
+              logMessage('res', res);
+            });
+          }
+        });
+      }
+    }
   }
 }
 

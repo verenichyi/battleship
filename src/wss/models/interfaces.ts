@@ -1,4 +1,7 @@
 import { WebSocket } from 'ws';
+import { CellStateTypes, ShipTypes } from '../enums/game-enums';
+import { Ship } from '../core/ship';
+
 export interface Player {
   name: string;
   password: string;
@@ -8,13 +11,6 @@ export interface Player {
 export interface RoomPlayer {
   index: number;
   name: string;
-}
-
-export interface Game {
-  id: number | string;
-  players: Player[];
-  ships: any[];
-  currentPlayerId: number | string;
 }
 
 export interface Client {
@@ -58,4 +54,35 @@ export interface UpdateWinnersResponseDataItem {
 export interface UpdateRoomResponseDataItem {
   roomId: number | string;
   roomUsers: RoomPlayer[];
+}
+
+export interface ShipData {
+  position: {
+    x: number;
+    y: number;
+  };
+  direction: boolean;
+  length: number;
+  type: ShipTypes;
+}
+
+export interface AddShipsRequestData {
+  gameId: number | string;
+  ships: ShipData[];
+  indexPlayer: number | string /* id of the player in the current game session */;
+}
+
+export interface StartGameResponseData {
+  ships: ShipData[] /* player's ships, not enemy's */;
+  currentPlayerIndex: number | string /* id of the player in the current game session, who have sent his ships */;
+}
+
+export interface TurnResponseData {
+  currentPlayer: number | string;
+}
+
+export interface Cell {
+  state: CellStateTypes;
+  shipId?: number;
+  instance?: Ship;
 }

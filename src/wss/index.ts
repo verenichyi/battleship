@@ -1,5 +1,5 @@
 import { createWebSocketStream, WebSocket, WebSocketServer } from 'ws';
-import CommandHandler from './command-handler';
+import CommandHandler from './core/command-handler';
 import { parseWsRequestMessage } from './helpers';
 import { logError } from './helpers/logMessage';
 
