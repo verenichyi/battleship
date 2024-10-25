@@ -27,37 +27,6 @@ export class Game {
     return null;
   }
 
-  private createBoard(idPlayer: number, ships: ShipData[]): void {
-    const field: Cell[][] = Array.from({ length: this.boardSize }, () =>
-      Array.from({ length: this.boardSize }, () => ({ state: CellStateTypes.EMPTY })),
-    );
-
-    ships.forEach((shipData, index) => {
-      const { x, y } = shipData.position;
-      const { length, direction } = shipData;
-      const ship = new Ship(length, index);
-
-      for (let i = 0; i < length; i += 1) {
-        const coordinateX = direction ? x : x + i;
-        const coordinateY = direction ? y + i : y;
-
-        if (this.isValidCoordinate(coordinateX, coordinateY)) {
-          field[coordinateX][coordinateY] = {
-            state: CellStateTypes.SHIP,
-            shipId: index,
-            ship,
-          };
-        }
-      }
-    });
-
-    this.boards.set(idPlayer, field);
-  }
-
-  private isValidCoordinate(x: number, y: number): boolean {
-    return x >= 0 && x < this.boardSize && y >= 0 && y < this.boardSize;
-  }
-
   public attack(indexPlayer: number, shot: Shot): GameInfo {
     const enemyId = this.playersIds.find((id) => id !== indexPlayer);
     const { x, y } = shot;
@@ -150,6 +119,33 @@ export class Game {
     }
   }
 
+  private createBoard(idPlayer: number, ships: ShipData[]): void {
+    const field: Cell[][] = Array.from({ length: this.boardSize }, () =>
+        Array.from({ length: this.boardSize }, () => ({ state: CellStateTypes.EMPTY })),
+    );
+
+    ships.forEach((shipData, index) => {
+      const { x, y } = shipData.position;
+      const { length, direction } = shipData;
+      const ship = new Ship(length, index);
+
+      for (let i = 0; i < length; i += 1) {
+        const coordinateX = direction ? x : x + i;
+        const coordinateY = direction ? y + i : y;
+
+        if (this.isValidCoordinate(coordinateX, coordinateY)) {
+          field[coordinateX][coordinateY] = {
+            state: CellStateTypes.SHIP,
+            shipId: index,
+            ship,
+          };
+        }
+      }
+    });
+
+    this.boards.set(idPlayer, field);
+  }
+
   private getCellsAround(shipId: number, board: Cell[][]): CellAround[] {
     const cellsAround: CellAround[] = [];
     const shipCells = board.flatMap((row, x) =>
@@ -164,16 +160,16 @@ export class Game {
 
       for (let dx = -1; dx <= 1; dx += 1) {
         for (let dy = -1; dy <= 1; dy += 1) {
-          const nx = x + dx;
-          const ny = y + dy;
+          const coordinateX = x + dx;
+          const coordinateY = y + dy;
 
-          if (this.isValidCoordinate(nx, ny)) {
-            const neighborCell = board[nx][ny];
+          if (this.isValidCoordinate(coordinateX, coordinateY)) {
+            const neighborCell = board[coordinateX][coordinateY];
 
             if (neighborCell.state !== CellStateTypes.SHOT && neighborCell.shipId !== shipId) {
               cellsAround.push({
                 status: StatusTypes.MISS,
-                position: { x: nx, y: ny },
+                position: { x: coordinateX, y: coordinateY },
               });
             }
           }
@@ -182,5 +178,9 @@ export class Game {
     }
 
     return cellsAround;
+  }
+
+  private isValidCoordinate(x: number, y: number): boolean {
+    return x >= 0 && x < this.boardSize && y >= 0 && y < this.boardSize;
   }
 }
