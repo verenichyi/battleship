@@ -3,6 +3,7 @@ import { Duplex } from 'node:stream';
 import {
   AddShipsRequestData,
   AddUserToRoomRequestData,
+  AttackRequestData,
   Client,
   Message,
   Player,
@@ -39,6 +40,9 @@ class CommandHandler {
         break;
       case MessageTypes.ADD_SHIPS:
         this.addShips(ws, data as AddShipsRequestData);
+        break;
+      case MessageTypes.ATTACK:
+        this.attack(ws, data as AttackRequestData);
         break;
     }
   }
@@ -237,6 +241,91 @@ class CommandHandler {
         });
       }
     }
+  }
+
+  attack(ws: WebSocket, data: AttackRequestData) {
+    const { gameId, x, y, indexPlayer } = data;
+    const client = this.clients.get(ws);
+    const game = this.games.get(+gameId);
+    const playersIds = game.playersIds;
+
+    const gameInfo = game.attack(+indexPlayer, { x, y });
+    const { nextPlayerId, status, error, errorMessage, cellsAround, winPlayer } = gameInfo;
+
+    if (error) {
+      logMessage('res', errorMessage);
+      return;
+    }
+
+    const response = {
+      type: MessageTypes.ATTACK,
+      data: {
+        position: { x, y },
+        currentPlayer: indexPlayer,
+        status: status,
+      },
+      id: 0,
+    };
+
+    const clients = Array.from(this.clients.values()).filter((client) => playersIds.includes(client.index));
+
+    clients.forEach((client) => {
+      client.ws.send(parseWsResponseMessage(response));
+      logMessage('res', response);
+    });
+
+    if (winPlayer) {
+      const response = {
+        type: MessageTypes.FINISH,
+        data: { winPlayer },
+        id: 0,
+      };
+
+      clients.forEach((client) => {
+        client.ws.send(parseWsResponseMessage(response));
+        logMessage('res', response);
+      });
+
+      this.addWinner(+winPlayer);
+      this.updateWinners();
+
+      return;
+    }
+
+    if (cellsAround) {
+      cellsAround.forEach(({ status, position }) => {
+        const res = {
+          ...response,
+          data: { ...response.data, position, status },
+        };
+
+        clients.forEach((client) => {
+          const turnResponse = {
+            type: MessageTypes.TURN,
+            data: {
+              currentPlayer: nextPlayerId,
+            },
+            id: 0,
+          };
+
+          client.ws.send(parseWsResponseMessage(res));
+          client.ws.send(parseWsResponseMessage(turnResponse));
+        });
+      });
+    }
+
+    clients.forEach((client) => {
+      const turnResponse = {
+        type: MessageTypes.TURN,
+        data: {
+          currentPlayer: nextPlayerId,
+        },
+        id: 0,
+      };
+
+      client.ws.send(parseWsResponseMessage(turnResponse));
+      logMessage('res', turnResponse);
+    });
   }
 }
 

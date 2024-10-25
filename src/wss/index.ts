@@ -51,9 +51,15 @@ class WSS {
 
           console.log('WSS closed\n');
         });
+
+      return this;
     } catch (error) {
       logError(error.message);
     }
+  }
+
+  close(): void {
+    this.wss.close();
   }
 }
 

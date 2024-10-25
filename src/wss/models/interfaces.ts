@@ -1,5 +1,5 @@
 import { WebSocket } from 'ws';
-import { CellStateTypes, ShipTypes } from '../enums/game-enums';
+import { CellStateTypes, ShipTypes, StatusTypes } from '../enums/game-enums';
 import { Ship } from '../core/ship';
 
 export interface Player {
@@ -66,6 +66,12 @@ export interface ShipData {
   type: ShipTypes;
 }
 
+export interface Cell {
+  state: CellStateTypes;
+  shipId?: number;
+  ship?: Ship;
+}
+
 export interface AddShipsRequestData {
   gameId: number | string;
   ships: ShipData[];
@@ -77,12 +83,45 @@ export interface StartGameResponseData {
   currentPlayerIndex: number | string /* id of the player in the current game session, who have sent his ships */;
 }
 
+export interface Shot {
+  x: number;
+  y: number;
+}
+
 export interface TurnResponseData {
   currentPlayer: number | string;
 }
 
-export interface Cell {
-  state: CellStateTypes;
-  shipId?: number;
-  instance?: Ship;
+export interface AttackRequestData {
+  gameId: number | string;
+  x: number;
+  y: number;
+  indexPlayer: number | string /* id of the player in the current game session */;
+}
+
+export interface AttackResponseData {
+  position: {
+    x: number;
+    y: number;
+  };
+  currentPlayer: number | string /* id of the player in the current game session */;
+  status: StatusTypes;
+}
+
+export interface FinishData {
+  winPlayer: number | string;
+}
+
+export interface CellAround {
+  status: StatusTypes;
+  position: Shot;
+}
+
+export interface GameInfo {
+  nextPlayerId: number;
+  status: StatusTypes;
+  cellsAround?: CellAround[];
+  winPlayer?: number | string;
+  error: boolean;
+  errorMessage: string;
 }
